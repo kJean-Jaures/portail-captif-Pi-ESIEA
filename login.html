@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Connexion - WiSafe</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+
+    video#bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    .container {
+      background-color: white;
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h1 {
+      color: #00aaff;
+      margin-bottom: 10px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #00aaff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0088cc;
+    }
+
+    .step { display: none; }
+    .step.active { display: block; animation: fadeIn 1s ease; }
+
+    .success-msg { color: green; margin-top: 10px; }
+    .error-msg { color: red; margin-top: 10px; }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .password-container {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 10px auto;
+    }
+
+    .password-container input {
+      width: 100%;
+      padding: 10px 45px 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 18px;
+      color: #555;
+      background-color: transparent;
+    }
+
+    .toggle-password:hover {
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+
+ <video autoplay muted loop playsinline id="bg-video">
+  <source src="video.mp4.mp4" type="video/mp4">
+  Votre navigateur ne supporte pas la vidéo HTML5.
+</video>
+
+  <div class="container">
+    <img src="Logo_ESIEA_2020.png" alt="Logo ESIEA" style="width: 160px; margin-bottom: 20px;">
+    <h1>Connexion WiSafe</h1>
+
+    <div id="step1" class="step active">
+      <p>Entrez votre adresse e-mail :</p>
+      <input type="email" id="email" placeholder="Votre adresse e-mail" required>
+
+      <div style="text-align: left; margin: 10px 0;">
+        <input type="checkbox" id="cgu"> 
+        <label for="cgu">
+          J’accepte les 
+          <a href="cgu.html" target="_blank" style="color: #00aaff;">conditions d’utilisation</a> du réseau WiFi
+        </label>
+      </div>
+
+      <button onclick="envoyerVerification()">Envoyer le code</button>
+      <p id="email-msg"></p>
+    </div>
+
+    <div id="step2" class="step">
+      <p>Un mail vous a été envoyé avec un code !</p>
+      <div class="password-container">
+        <input type="password" id="password" placeholder="Mot de passe" required>
+        <i class="fas fa-eye toggle-password" onclick="togglePassword()" id="toggle-icon"></i>
+      </div>
+      <button onclick="verifierConnexion()">Se connecter</button>
+      <p id="password-msg"></p>
+    </div>
+  </div>
+
+  <script>
+    emailjs.init("vrZ3CG4-MI1G-ahU5");
+
+    function envoyerVerification() {
+      const email = document.getElementById('email').value.trim();
+      const emailMsg = document.getElementById('email-msg');
+      const cguCheckbox = document.getElementById('cgu');
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        emailMsg.className = "error-msg";
+        emailMsg.textContent = "❌ Adresse e-mail invalide.";
+        return;
+      }
+
+      if (!cguCheckbox.checked) {
+        emailMsg.className = "error-msg";
+        emailMsg.textContent = "❌ Vous devez accepter les conditions d'utilisation.";
+        return;
+      }
+
+      const code = Math.floor(100000 + Math.random() * 900000);
+
+      const params = {
+        email: email,
+        code: code
+      };
+
+      emailjs.send("service_l6wgqm1", "template_1jy6j6w", params)
+        .then(function(response) {
+          emailMsg.className = "success-msg";
+          emailMsg.textContent = "✅ Code envoyé avec succès à " + email;
+          document.getElementById('step1').classList.remove('active');
+          document.getElementById('step2').classList.add('active');
+          sessionStorage.setItem("codeEnvoye", code);
+        }, function(error) {
+          console.error("Erreur :", error);
+          emailMsg.className = "error-msg";
+          emailMsg.textContent = "❌ Échec de l'envoi du mail.";
+        });
+    }
+
+    function verifierConnexion() {
+      const password = document.getElementById('password').value.trim();
+      const passwordMsg = document.getElementById('password-msg');
+
+      if (password.length < 6) {
+        passwordMsg.className = "error-msg";
+        passwordMsg.textContent = "❌ Le mot de passe doit contenir au moins 6 caractères.";
+        return;
+      }
+
+      passwordMsg.className = "success-msg";
+      passwordMsg.textContent = "✅ Connexion réussie. Redirection...";
+      setTimeout(() => {
+        window.location.href = "http://www.google.com";
+      }, 2000);
+    }
+
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      const toggleIcon = document.getElementById("toggle-icon");
+
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+      }
+    }
+  </script>
+</body>
+</html>

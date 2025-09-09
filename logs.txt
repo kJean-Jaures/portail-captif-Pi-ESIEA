@@ -1,0 +1,19 @@
+<?php
+// Récupérer les données envoyées en POST
+$email = $_POST['email'] ?? '';
+$ip = $_POST['ip'] ?? '';
+$date = date('Y-m-d H:i:s');
+
+// Nettoyage basique (sécurité)
+$email = filter_var($email, FILTER_SANITIZE_EMAIL);
+$ip = filter_var($ip, FILTER_VALIDATE_IP) ? $ip : 'IP invalide';
+
+// Ligne à écrire dans le fichier
+$logline = "$date | $email | $ip\n";
+
+// Écrire la ligne dans logs.txt (création si absent)
+file_put_contents('logs.txt', $logline, FILE_APPEND | LOCK_EX);
+
+// Réponse pour debug
+echo "Log enregistré avec succès.";
+?>
